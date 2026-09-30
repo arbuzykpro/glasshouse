@@ -1,0 +1,15 @@
+# Normalize line endings on checkin, commit them as LF. Without this, Windows
+# rewrites every file to CRLF and the checkout on the Mac runner differs from
+# what was committed.
+* text=auto eol=lf
+
+# Binary — Git must never touch these.
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.ico    binary
+*.pdf    binary
+*.zip    binary
+*.p12    binary
+*.cer    binary
+*.mobileprovision binary
