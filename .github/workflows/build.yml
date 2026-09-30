@@ -22,7 +22,7 @@ jobs:
     name: Verify it compiles
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -75,7 +75,14 @@ jobs:
         run: |
           if [ -f build/compile.log ]; then
             echo "---- errors ----"
-            grep -E "error:|warning: .*never used|BUILD FAILED" build/compile.log | head -60 || true
+            grep -E "error:|BUILD FAILED" build/compile.log | head -60 || true
+            # Re-emit as workflow annotations. These show up on the run summary
+            # page and the checks tab, which is readable without scrolling a
+            # 4000-line log — and it's how a human reviewer sees it too.
+            echo "---- annotated ----"
+            grep -oE "[^ ]+\.swift:[0-9]+:[0-9]+: error: .*" build/compile.log | head -40 | while read -r line; do
+              echo "::error::$line"
+            done
             echo "---- last 30 lines ----"
             tail -30 build/compile.log
           else
@@ -120,7 +127,7 @@ jobs:
     runs-on: macos-15
     if: ${{ github.event_name == 'workflow_dispatch' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install XcodeGen
         run: brew install xcodegen
