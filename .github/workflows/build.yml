@@ -31,7 +31,19 @@ jobs:
         run: xcodegen generate
 
       - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_16.2.app
+        run: |
+          # Pin when the exact version is present so signed archives stay
+          # reproducible, but fall back to the image default rather than failing.
+          # The runner image rotates and a hardcoded path eventually vanishes.
+          PINNED="/Applications/Xcode_16.2.app"
+          if [ -d "$PINNED" ]; then
+            sudo xcode-select -s "$PINNED"
+            echo "Pinned to $PINNED"
+          else
+            echo "::notice::$PINNED not present, using the runner default."
+          fi
+          xcodebuild -version
+          xcrun --sdk iphonesimulator --show-sdk-version
 
       - name: Show the resolved build settings (debugging aid)
         run: |
@@ -43,6 +55,9 @@ jobs:
       - name: Compile for the simulator
         run: |
           set -o pipefail
+          # Must exist before tee opens the log. DerivedDataPath creates it
+          # only once xcodebuild gets going, which is too late for the pipe.
+          mkdir -p build
           xcodebuild \
             -project Glasshouse.xcodeproj \
             -scheme Glasshouse \
@@ -58,13 +73,29 @@ jobs:
       - name: Surface any Swift errors
         if: failure()
         run: |
-          echo "---- errors ----"
-          grep -E "error:|warning: .*never used|BUILD FAILED" build/compile.log | head -60 || true
+          if [ -f build/compile.log ]; then
+            echo "---- errors ----"
+            grep -E "error:|warning: .*never used|BUILD FAILED" build/compile.log | head -60 || true
+            echo "---- last 30 lines ----"
+            tail -30 build/compile.log
+          else
+            echo "::error::No compile.log — the build failed before xcodebuild ran."
+            echo "Check whether xcodegen produced a project, and whether the"
+            echo "scheme is named 'Glasshouse'."
+            ls -la
+          fi
 
       - name: Package the simulator build
         if: success()
         run: |
           APP=$(find build/Build/Products/Release-iphonesimulator -maxdepth 1 -name "*.app" | head -1)
+          if [ -z "$APP" ]; then
+            echo "::error::Build reported success but no .app was produced."
+            echo "--- products actually present ---"
+            find build/Build/Products -maxdepth 2 -name "*.app" 2>/dev/null || echo "(no Products dir)"
+            ls -la build/Build 2>/dev/null || true
+            exit 1
+          fi
           echo "built: $APP"
           # -c -k --keepParent makes a zip that survives symlinks inside .app,
           # which plain `zip` mangles.
@@ -98,7 +129,14 @@ jobs:
         run: xcodegen generate
 
       - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_16.2.app
+        run: |
+          PINNED="/Applications/Xcode_16.2.app"
+          if [ -d "$PINNED" ]; then
+            sudo xcode-select -s "$PINNED"
+          else
+            echo "::notice::$PINNED not present, using the runner default."
+          fi
+          xcodebuild -version
 
       # Secrets are NOT available in a job-level `if:`, so the check has to
       # happen in a step and gate everything after it.
