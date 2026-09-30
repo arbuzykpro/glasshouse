@@ -25,7 +25,13 @@ targets:
         PRODUCT_NAME: Glasshouse
         GENERATE_INFOPLIST_FILE: YES
         TARGETED_DEVICE_FAMILY: "1,2"
+        # Name under the icon on the Home Screen. Independent of PRODUCT_NAME,
+        # which is the binary name.
         INFOPLIST_KEY_CFBundleDisplayName: Glasshouse
+        # Underscore-prefixed, so Xcode's asset compiler is the only thing that
+        # resolves it. Points at the appiconset rather than a bare name, which
+        # keeps the icon out of the bundle's top level.
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
