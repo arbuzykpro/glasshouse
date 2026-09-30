@@ -23,7 +23,9 @@ struct GlassLiveActivity: Widget {
                         .foregroundStyle(accent)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Gauge(value: p) {
+                    // Gauge needs both closures supplied. `Gauge(value:)` on
+                    // its own has no currentValueLabel and renders nothing.
+                    Gauge(value: p, in: 0...1) {
                         EmptyView()
                     } currentValueLabel: {
                         Text("\(Int(p * 100))")
@@ -56,10 +58,12 @@ struct GlassLiveActivity: Widget {
             } compactTrailing: {
                 // Right slot. This is the scarce real estate — a gauge reads
                 // better here than a number at this size.
-                Gauge(value: p) {}
-                    .gaugeStyle(.accessoryCircularCapacity)
-                    .tint(accent)
-                    .frame(width: 20, height: 20)
+                Gauge(value: p, in: 0...1) {
+                    EmptyView()
+                }
+                .gaugeStyle(.accessoryCircularCapacity)
+                .tint(accent)
+                .frame(width: 20, height: 20)
             } minimal: {
                 // The bare dot shown when several activities compete.
                 Image(systemName: context.state.symbolAlt)
