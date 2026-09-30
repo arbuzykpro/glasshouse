@@ -51,10 +51,12 @@ struct GuideView: View {
                 // it is not guaranteed, and App Review rejects apps that lean
                 // on it. On a sideloaded build it usually resolves; treat any
                 // failure as expected rather than a bug.
-                Section("Jump to system settings") {
+                Section {
                     settingsLink("Appearance & Liquid Glass", path: "General&path=Appearance")
                     settingsLink("Wallpaper", path: "Wallpaper")
                     settingsLink("Accessibility", path: "Accessibility")
+                } header: {
+                    Text("Jump to system settings")
                 } footer: {
                     Text("These use an undocumented URL scheme, so they may do nothing on some builds. If a link does not open, go to Settings directly.")
                 }

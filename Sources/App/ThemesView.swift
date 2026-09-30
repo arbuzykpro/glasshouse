@@ -150,8 +150,15 @@ struct ThemesView: View {
                     saveState = .denied("Photos access denied. Enable it in Settings.")
                     return
                 }
+                // `creationRequestForAsset(from:)` takes a UIImage, not Data.
+                // Decoding here also lets us report a genuinely bad PNG rather
+                // than failing later inside Photos.
+                guard let image = UIImage(data: data) else {
+                    saveState = .denied("Rendered image could not be decoded.")
+                    return
+                }
                 PHPhotoLibrary.shared().performChanges {
-                    PHAssetChangeRequest.creationRequestForAsset(from: data)
+                    PHAssetChangeRequest.creationRequestForAsset(from: image)
                 } completionHandler: { ok, err in
                     DispatchQueue.main.async {
                         saveState = ok ? .done : .denied(err?.localizedDescription ?? "Save failed.")
